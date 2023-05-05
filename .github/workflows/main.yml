@@ -26,3 +26,9 @@ jobs:
 
       - uses: scacap/action-surefire-report@v1
         if: always()
+
+      - name: 'Publish Test Report'
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        if: always()
+        with:
+          files: "**/surefire-reports/TEST-*.xml"
