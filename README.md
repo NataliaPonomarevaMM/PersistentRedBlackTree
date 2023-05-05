@@ -1,4 +1,4 @@
-[![Tests](https://github.com/NataliaPonomarevaMM/PersistentRedBlackTree/actions/main.yaml/badge.svg)](https://github.com/NataliaPonomarevaMM/PersistentRedBlackTree/actions/main.yaml)
+[![Tests](https://github.com/NataliaPonomarevaMM/PersistentRedBlackTree/actions/workflows/main.yaml/badge.svg)](https://github.com/NataliaPonomarevaMM/PersistentRedBlackTree/actions/workflows/main.yaml)
 
 
 # PersistentRedBlackTree
