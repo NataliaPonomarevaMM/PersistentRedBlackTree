@@ -1,205 +1,292 @@
 package io.whitecloud.impl;
 
 import java.util.LinkedList;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 class TreeUtils {
     public static <E extends Comparable<E>> Node<E> traverse(Node<E> root, E el,
                                                              Function<Node<E>, Node<E>> onExact,
-                                                             BiConsumer<Node<E>, Node.Direction> onEach)
+                                                             Consumer<Node<E>> onEach)
     {
         Node<E> current = root;
         while (current != null) {
-            int comparisonResult = el.compareTo(current.getValue());
+            int comparisonResult = el.compareTo(current.value());
             if (comparisonResult == 0) {
                 return onExact.apply(current);
             }
             Node.Direction dir = comparisonResult < 0 ? Node.Direction.LEFT : Node.Direction.RIGHT;
-            onEach.accept(current, dir);
+            onEach.accept(current);
             current = current.getChild(dir);
         }
         return null;
     }
 
-    public static <E> Node<E> insert(LinkedList<Node<E>> parents, Node<E> node, Node<E> root) {
+    public static <E> Node<E> insert(LinkedList<Node<E>> parents, Node<E> node, Node.Direction nodeDirection) {
         if (parents.isEmpty()) {
-            node.setBlack(true);
-            return node;
+            return Node.builderFrom(node)
+                .isBlack(true)
+                .build();
         }
         else if (!isBlack(parents.getLast())) {
-            return insertUncleRed(parents, node, root);
+            return insertUncleRed(parents, node, nodeDirection);
         }
-        return root;
+        while (!parents.isEmpty()) {
+            Node<E> parent = parents.removeLast();
+            Node<E> newParent = Node.builderFrom(parent)
+                .child(node, nodeDirection)
+                .build();
+            nodeDirection = getNodeDirection(parents, parent);
+            node = newParent;
+        }
+        return node;
     }
 
-    private static <E> Node<E> insertUncleRed(LinkedList<Node<E>> parents, Node<E> node, Node<E> root) {
+    private static <E> Node<E> insertUncleRed(LinkedList<Node<E>> parents, Node<E> node, Node.Direction nodeDirection) {
         Node<E> grandParent = parents.get(parents.size() - 2);
         Node<E> parent = parents.getLast();
         Node.Direction uncleDirection = grandParent.getDirectionOfChild(parent).getOpposite();
         Node<E> uncle = grandParent.getChild(uncleDirection);
 
         if (isBlack(uncle)) {
-            return insertUncleBlack(parents, node, root);
+            return insertUncleBlack(parents, node, nodeDirection);
         }
 
-        parent.setBlack(true);
-        Node<E> clonedUncle = grandParent.cloneChild(uncleDirection);
-        clonedUncle.setBlack(true);
-        grandParent.setBlack(false);
-
         parents.removeLast();
         parents.removeLast();
 
-        return insert(parents, grandParent, root);
+        Node<E> newParent = Node.builderFrom(parent)
+            .child(node, nodeDirection)
+            .isBlack(true)
+            .build();
+        Node<E> newUncle = Node.builderFrom(uncle)
+            .isBlack(true)
+            .build();
+        Node<E> newGrandParent = Node.builderFrom(grandParent)
+            .child(newUncle, uncleDirection)
+            .child(newParent, uncleDirection.getOpposite())
+            .isBlack(false)
+            .build();
+
+        Node.Direction direction = getNodeDirection(parents, grandParent);
+        return insert(parents, newGrandParent, direction);
     }
 
-    private static <E> Node<E> insertUncleBlack(LinkedList<Node<E>> parents, Node<E> node, Node<E> root) {
+    private static <E> Node<E> insertUncleBlack(LinkedList<Node<E>> parents, Node<E> node, Node.Direction nodeDirection) {
         Node<E> grandParent = parents.get(parents.size() - 2);
         Node<E> parent = parents.getLast();
-
-        Node.Direction nodeDirection = parent.getDirectionOfChild(node);
         Node.Direction parentDirection = grandParent.getDirectionOfChild(parent);
+
+        Node.NodeBuilder<E> parentBuilder = Node.builderFrom(parent)
+            .child(node, nodeDirection);
 
         if (nodeDirection != parentDirection) {
             parents.removeLast();
-            Node<E> replacement = rotate(grandParent, parent, parentDirection);
-            replacement.cloneChild(parentDirection);
+            Node<E> replacement = rotate(parentBuilder.build(), parentDirection);
             parents.addLast(replacement);
-            parent = replacement;
+            parentBuilder = Node.builderFrom(replacement);
         }
 
-        parent.setBlack(true);
-        grandParent.setBlack(false);
+        Node<E> newParent = parentBuilder
+            .isBlack(true)
+            .build();
+        Node<E> newGrandParent = Node.builderFrom(grandParent)
+            .child(newParent, grandParent.getDirectionOfChild(parent))
+            .isBlack(false)
+            .build();
 
         parents.removeLast();
         parents.removeLast();
-        Node<E> grandGrandParent = parents.isEmpty() ? null : parents.getLast();
-        Node<E> rotated = rotate(grandGrandParent, grandParent, parentDirection.getOpposite());
-        return grandGrandParent == null ? rotated : root;
+
+        Node<E> rotated = rotate(newGrandParent, parentDirection.getOpposite());
+        Node.Direction direction = getNodeDirection(parents, grandParent);
+        return insert(parents, rotated, direction);
     }
 
-    public static <E> Node<E> remove(LinkedList<Node<E>> parents, Node<E> node, Node<E> root) {
+    public static <E> Node<E> remove(LinkedList<Node.NodeWithDirection<E>> parents, Node<E> node) {
         if (node.getChild(Node.Direction.LEFT) != null && node.getChild(Node.Direction.RIGHT) != null) {
-            parents.addLast(node);
-            node.cloneChild(Node.Direction.LEFT);
-
-            Node<E> current = node.cloneChild(Node.Direction.RIGHT);
+            Node<E> current = node.getChild(Node.Direction.RIGHT);
+            E lastValue = null;
             while (current != null) {
-                parents.addLast(current);
-                current = current.cloneChild(Node.Direction.LEFT);
+                lastValue = current.value();
+                current = current.getChild(Node.Direction.LEFT);
             }
 
-            Node<E> currentParent = parents.getLast();
-            node.setValue(currentParent.getValue());
-            parents.removeLast();
-            return removeOneChild(parents, currentParent, root);
+            Node<E> newNode = Node.builderFrom(node)
+                .value(lastValue)
+                .build();
+            var direction = parents.isEmpty() ? null : parents.getLast().node().getDirectionOfChild(node);
+            parents.add(new Node.NodeWithDirection<>(newNode, direction));
+
+            current = node.getChild(Node.Direction.RIGHT);
+            while (current != null) {
+                parents.add(createNodeWithDirection(parents, current));
+                current = current.getChild(Node.Direction.LEFT);
+            }
+            Node<E> currentParent = parents.removeLast().node();
+            return removeOneChild(parents, currentParent);
         }
-        return removeOneChild(parents, node, root);
+        return removeOneChild(parents, node);
     }
 
-    private static <E> Node<E> removeOneChild(LinkedList<Node<E>> parents, Node<E> node, Node<E> root) {
-        Node<E> child = node.cloneChild(node.getDirectionOfChild(null).getOpposite());
+    private static <E> Node<E> removeOneChild(LinkedList<Node.NodeWithDirection<E>> parents, Node<E> node) {
+        Node<E> child = node.getChild(node.getDirectionOfChild(null).getOpposite());
+        Node<E> newChild = child == null ? null : Node.builderFrom(child)
+            .isBlack(true)
+            .build();
 
         if (parents.isEmpty()) {
-            root = child;
-        } else {
-            Node<E> parent = parents.getLast();
-            Node.Direction nodeDirection = parent.getDirectionOfChild(node);
-            parent.setChild(child, nodeDirection);
+            return newChild;
         }
 
+        Node.Direction nodeDirection = parents.getLast().node().getDirectionOfChild(node);
         if (isBlack(node)) {
             if (isBlack(child)) {
-                return removeRedSibling(parents, child, root);
+                return removeRedSibling(parents, newChild, nodeDirection);
             }
-            child.setBlack(true);
         }
-        return root;
+        return updateParentsUpToRoot(parents, newChild, nodeDirection);
     }
 
-    private static <E> Node<E> removeRedSibling(LinkedList<Node<E>> parents, Node<E> node, Node<E> root) {
-        if (parents.isEmpty()) {
-            return node;
-        }
-
-        Node<E> parent = parents.getLast();
-        Node.Direction nodeDirection = parent.getDirectionOfChild(node);
+    private static <E> Node<E> removeRedSibling(LinkedList<Node.NodeWithDirection<E>> parents, Node<E> node, Node.Direction nodeDirection) {
+        Node.NodeWithDirection<E> parentWithDir = parents.getLast();
+        Node<E> parent = parentWithDir.node();
         Node<E> sibling = parent.getChild(nodeDirection.getOpposite());
 
         if (!isBlack(sibling)) {
-            Node<E> clonedSibling = parent.cloneChild(nodeDirection.getOpposite());
-            parent.setBlack(false);
-            clonedSibling.setBlack(true);
+            Node<E> newSibling = Node.builderFrom(sibling)
+                .isBlack(true)
+                .build();
+            Node<E> newParent = Node.builderFrom(parent)
+                .child(node, nodeDirection)
+                .child(newSibling, nodeDirection.getOpposite())
+                .isBlack(false)
+                .build();
+
+            Node<E> replacement = rotate(newParent, nodeDirection);
 
             parents.removeLast();
-            Node<E> grandParent = parents.isEmpty() ? null : parents.getLast();
-            Node<E> replacement = rotate(grandParent, parent, nodeDirection);
-            if (grandParent == null) {
-                root = replacement;
-            }
-
-            parents.add(replacement);
-            parents.add(replacement.getChild(nodeDirection));
-            node = replacement.getChild(nodeDirection).cloneChild(nodeDirection);
+            parents.add(new Node.NodeWithDirection<>(replacement, parentWithDir.direction()));
+            parents.add(new Node.NodeWithDirection<>(replacement.getChild(nodeDirection), nodeDirection));
+            node = replacement.getChild(nodeDirection).getChild(nodeDirection);
         }
-        return removeBlackSibling(parents, node, root);
+        return removeBlackSibling(parents, node, nodeDirection);
     }
 
-    private static <E> Node<E> removeBlackSibling(LinkedList<Node<E>> parents, Node<E> node, Node<E> root) {
-        Node<E> parent = parents.getLast();
-        Node.Direction nodeDirection = parent.getDirectionOfChild(node);
-        Node<E> sibling = parent.cloneChild(nodeDirection.getOpposite());
+    private static <E> Node<E> removeBlackSibling(LinkedList<Node.NodeWithDirection<E>> parents, Node<E> node, Node.Direction nodeDirection) {
+        Node.NodeWithDirection<E> parentWithDir = parents.getLast();
+        Node<E> parent = parentWithDir.node();
+        Node<E> sibling = parent.getChild(nodeDirection.getOpposite());
+        Node.NodeBuilder<E> newParentBuilder = Node.builderFrom(parent)
+            .child(node, nodeDirection)
+            .isBlack(true);
 
-        if (sibling != null && sibling.isBlack() && isBlack(sibling.getChild(nodeDirection.getOpposite()))) {
-            sibling.setBlack(false);
-
+        if (sibling != null && isBlack(sibling.getChild(nodeDirection.getOpposite()))) {
             if (isBlack(sibling.getChild(nodeDirection))) {
-                if (parent.isBlack()) {
-                    parents.removeLast();
-                    return removeRedSibling(parents, parent, root);
-                }
-
-                parent.setBlack(true);
-                return root;
+                return removeBlackSiblingWithBlackChildren(parents, node, nodeDirection);
             }
-
-            sibling.cloneChild(nodeDirection);
-            sibling.getChild(nodeDirection).setBlack(true);
-            rotate(parent, sibling, nodeDirection.getOpposite());
+            Node<E> newSiblingChild = Node.builderFrom(sibling.getChild(nodeDirection))
+                .isBlack(true)
+                .build();
+            sibling = Node.builderFrom(sibling)
+                .isBlack(false)
+                .child(newSiblingChild, nodeDirection)
+                .build();
+            sibling = rotate(sibling, nodeDirection.getOpposite());
+            newParentBuilder = newParentBuilder
+                .child(sibling, nodeDirection.getOpposite());
         }
 
         parents.removeLast();
-        boolean parentBlack = parent.isBlack();
-        parent.setBlack(true);
 
         if (sibling != null) {
-            sibling.setBlack(parentBlack);
-            sibling.cloneChild(nodeDirection.getOpposite());
-            if (sibling.getChild(nodeDirection.getOpposite()) != null) {
-                sibling.getChild(nodeDirection.getOpposite()).setBlack(true);
+            Node<E> siblingChild = sibling.getChild(nodeDirection.getOpposite());
+            if (siblingChild != null) {
+                siblingChild = Node.builderFrom(siblingChild)
+                    .isBlack(true)
+                    .build();
             }
-            Node<E> grandParent = parents.isEmpty() ? null : parents.getLast();
-            Node<E> rotated = rotate(grandParent, parent, nodeDirection);
+            Node<E> newSibling = Node.builderFrom(sibling)
+                .child(siblingChild, nodeDirection.getOpposite())
+                .isBlack(parent.isBlack())
+                .build();
+            Node<E> newParent = newParentBuilder
+                .child(newSibling, nodeDirection.getOpposite())
+                .build();
+            Node<E> rotated = rotate(newParent, nodeDirection);
 
-            return grandParent == null ? rotated : root;
+            if (parents.isEmpty()) {
+                return rotated;
+            }
+            return updateParentsUpToRoot(parents, rotated, parentWithDir.direction());
         }
-        return root;
+        return updateParentsUpToRoot(parents, newParentBuilder.build(), parentWithDir.direction());
     }
 
-    private static <E> Node<E> rotate(Node<E> parent, Node<E> node, Node.Direction direction) {
-        Node<E> child = node.getChild(direction.getOpposite());
+    private static <E> Node<E> removeBlackSiblingWithBlackChildren(LinkedList<Node.NodeWithDirection<E>> parents, Node<E> node, Node.Direction nodeDirection) {
+        Node.NodeWithDirection<E> parentWithDir = parents.removeLast();
+        Node<E> parent = parentWithDir.node();
+        Node<E> sibling = parent.getChild(nodeDirection.getOpposite());
+        Node<E> newSibling = Node.builderFrom(sibling)
+            .isBlack(false)
+            .build();
+        Node.NodeBuilder<E> newParentBuilder = Node.builderFrom(parent)
+            .child(node, nodeDirection)
+            .child(newSibling, nodeDirection.getOpposite());
 
-        if (parent != null) {
-            parent.setChild(child, parent.getDirectionOfChild(node));
+        if (parent.isBlack()) {
+            if (parents.isEmpty()) {
+                return newParentBuilder.build();
+            }
+            return removeRedSibling(parents, newParentBuilder.build(), parentWithDir.direction());
         }
 
-        node.setChild(child.getChild(direction), direction.getOpposite());
-        child.setChild(node, direction);
-        return child;
+        Node<E> newParent = newParentBuilder
+            .isBlack(true)
+            .build();
+        return updateParentsUpToRoot(parents, newParent, parentWithDir.direction());
+    }
+
+    private static <E> Node<E> rotate(Node<E> node, Node.Direction direction) {
+        Node<E> child = node.getChild(direction.getOpposite());
+        Node<E> newNode = Node.builderFrom(node)
+            .child(child.getChild(direction), direction.getOpposite())
+            .build();
+        return Node.builderFrom(child)
+            .child(newNode, direction)
+            .build();
     }
 
     private static <E> boolean isBlack(Node<E> node) {
         return node == null || node.isBlack();
+    }
+
+    private static <E> Node.Direction getNodeDirection(LinkedList<Node<E>> parents, Node<E> node) {
+        if (parents.isEmpty()) {
+            return null;
+        }
+
+        Node<E> parent = parents.getLast();
+        return parent.getDirectionOfChild(node);
+    }
+
+    public static <E> Node.NodeWithDirection<E> createNodeWithDirection(LinkedList<Node.NodeWithDirection<E>> parents, Node<E> node) {
+        Node.Direction direction = null;
+        if (!parents.isEmpty()) {
+            Node.NodeWithDirection<E> parent = parents.getLast();
+            direction = parent.node().getDirectionOfChild(node);
+        }
+        return new Node.NodeWithDirection<>(node, direction);
+    }
+
+    private static <E> Node<E> updateParentsUpToRoot(LinkedList<Node.NodeWithDirection<E>> parents, Node<E> node, Node.Direction nodeDirection) {
+        while (!parents.isEmpty()) {
+            Node.NodeWithDirection<E> parentWithDir = parents.removeLast();
+            node = Node.builderFrom(parentWithDir.node())
+                .child(node, nodeDirection)
+                .build();
+            nodeDirection = parentWithDir.direction();
+        }
+        return node;
     }
 }

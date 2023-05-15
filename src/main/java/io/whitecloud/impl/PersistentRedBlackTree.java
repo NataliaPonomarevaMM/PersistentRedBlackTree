@@ -26,27 +26,20 @@ public class PersistentRedBlackTree<E extends Comparable<E>> implements Persiste
             return null;
         }
 
-        Node<E> newNode = new Node<>(el);
-
         if (root == null) {
-            newNode.setBlack(true);
+            Node<E> newNode = new Node<>(el, true, null, null);
             return new PersistentRedBlackTree<>(newNode);
         }
 
-        Node<E> newRoot = Node.clone(root);
+        Node<E> newNode = new Node<>(el, false, null, null);
         LinkedList<Node<E>> parents = new LinkedList<>();
-        traverse(newRoot, el, node -> node, (node, direction) -> {
-                parents.add(node);
-                node.cloneChild(direction);
-            }
-        );
+        traverse(root, el, node -> node, parents::add);
 
         Node<E> parent = parents.getLast();
-        Node.Direction dir = el.compareTo(parent.getValue()) < 0 ? Node.Direction.LEFT : Node.Direction.RIGHT;
-        parent.setChild(newNode, dir);
+        Node.Direction dir = el.compareTo(parent.value()) < 0 ? Node.Direction.LEFT : Node.Direction.RIGHT;
 
-        Node<E> root = insert(parents, newNode, newRoot);
-        return new PersistentRedBlackTree<>(root);
+        Node<E> newRoot = insert(parents, newNode, dir);
+        return new PersistentRedBlackTree<>(newRoot);
     }
 
     @Override
@@ -55,17 +48,12 @@ public class PersistentRedBlackTree<E extends Comparable<E>> implements Persiste
             return null;
         }
 
-        Node<E> newRoot = Node.clone(root);
-        LinkedList<Node<E>> parents = new LinkedList<>();
-
-        Node<E> root = traverse(newRoot, el, node -> remove(parents, node, newRoot),
-            (node, dir) -> {
-                parents.add(node);
-                node.cloneChild(dir);
-            }
+        LinkedList<Node.NodeWithDirection<E>> parents = new LinkedList<>();
+        Node<E> newRoot = traverse(root, el, node -> remove(parents, node),
+            node -> parents.add(createNodeWithDirection(parents, node))
         );
 
-        return new PersistentRedBlackTree<>(root);
+        return new PersistentRedBlackTree<>(newRoot);
     }
 
     @Override
@@ -73,7 +61,7 @@ public class PersistentRedBlackTree<E extends Comparable<E>> implements Persiste
         if (root == null) {
             return false;
         }
-        return traverse(root, el, node -> node, (__, ___) -> {}) != null;
+        return traverse(root, el, node -> node, __ -> {}) != null;
     }
 
     @Override
@@ -131,7 +119,7 @@ public class PersistentRedBlackTree<E extends Comparable<E>> implements Persiste
                 stack.pop();
             }
 
-            return current.getValue();
+            return current.value();
         }
 
         private void moveLeft(Node<E> current) {

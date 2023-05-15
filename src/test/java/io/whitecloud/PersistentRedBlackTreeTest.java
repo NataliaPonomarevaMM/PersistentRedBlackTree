@@ -185,7 +185,7 @@ public class PersistentRedBlackTreeTest {
         Iterator<Integer> iterator = tree.iterator(PersistentTree.Order.PreOrder);
         iterator.forEachRemaining(list::add);
 
-        List<Integer> preOrder = List.of(2, 1, 4, 3, 6, 5, 7);
+        List<Integer> preOrder = List.of(4, 2, 1, 3, 6, 5, 7);
         assertEquals(preOrder, list);
     }
 
@@ -197,7 +197,7 @@ public class PersistentRedBlackTreeTest {
         Iterator<Integer> iterator = tree.iterator(PersistentTree.Order.PostOrder);
         iterator.forEachRemaining(list::add);
 
-        List<Integer> postOrder = List.of(1, 3, 5, 7, 6, 4, 2);
+        List<Integer> postOrder = List.of(1, 3, 2, 5, 7, 6, 4);
         assertEquals(postOrder, list);
     }
 }

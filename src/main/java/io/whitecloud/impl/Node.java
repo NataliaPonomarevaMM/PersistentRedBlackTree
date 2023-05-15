@@ -1,6 +1,6 @@
 package io.whitecloud.impl;
 
-class Node<E> {
+record Node<E>(E value, boolean isBlack, Node<E> left, Node<E> right) {
     enum Direction {
         LEFT, RIGHT;
 
@@ -8,38 +8,7 @@ class Node<E> {
             return this == LEFT ? RIGHT : LEFT;
         }
     }
-
-    private E value;
-    private boolean isBlack;
-    private Node<E> left = null, right = null;
-
-    public Node(E value) {
-        this.value = value;
-        this.isBlack = false;
-    }
-
-    public Node(E value, boolean isBlack, Node<E> left, Node<E> right) {
-        this.value = value;
-        this.isBlack = isBlack;
-        this.left = left;
-        this.right = right;
-    }
-
-    public E getValue() {
-        return this.value;
-    }
-
-    public void setValue(E value) {
-        this.value = value;
-    }
-
-    public boolean isBlack() {
-        return this.isBlack;
-    }
-
-    public void setBlack(boolean isBlack) {
-        this.isBlack = isBlack;
-    }
+    public record NodeWithDirection<E>(Node<E> node, Direction direction) {}
 
     public Node<E> getChild(Direction direction) {
         return switch (direction) {
@@ -48,28 +17,47 @@ class Node<E> {
         };
     }
 
-    public void setChild(Node<E> node, Direction direction) {
-        switch (direction) {
-            case LEFT -> left = node;
-            case RIGHT -> right = node;
-        }
-    }
-
     public Direction getDirectionOfChild(Node<E> child) {
         return this.right == child ? Direction.RIGHT : Direction.LEFT;
     }
 
-    public Node<E> cloneChild(Direction direction) {
-        return switch (direction) {
-            case LEFT -> left = clone(left);
-            case RIGHT -> right = clone(right);
-        };
+    public static <E> NodeBuilder<E> builderFrom(Node<E> node) {
+        return new NodeBuilder<>(node.value, node.isBlack, node.left, node.right);
     }
 
-    public static <E> Node<E> clone(Node<E> node) {
-        if (node == null) {
-            return null;
+    public static class NodeBuilder<E> {
+        private E value;
+        private boolean isBlack;
+        private Node<E> left;
+        private Node<E> right;
+
+        NodeBuilder(E value, boolean isBlack, Node<E> left, Node<E> right) {
+            this.value = value;
+            this.isBlack = isBlack;
+            this.left = left;
+            this.right = right;
         }
-        return new Node<>(node.value, node.isBlack, node.left, node.right);
+
+        public NodeBuilder<E> value(E value) {
+            this.value = value;
+            return this;
+        }
+
+        public NodeBuilder<E> isBlack(boolean isBlack) {
+            this.isBlack = isBlack;
+            return this;
+        }
+
+        public NodeBuilder<E> child(Node<E> node, Direction direction) {
+            switch (direction) {
+                case LEFT -> left = node;
+                case RIGHT -> right = node;
+            }
+            return this;
+        }
+
+        public Node<E> build() {
+            return new Node<>(value, isBlack, left, right);
+        }
     }
 }
