@@ -1,10 +1,6 @@
 package io.whitecloud;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 import static io.whitecloud.TestUtils.EMPTY;
 import static io.whitecloud.TestUtils.checkOrdersOfTree;
@@ -136,6 +132,7 @@ public class PersistentRedBlackTreeTest {
     public void testRandomValues() {
         var random = new Random();
         var previous = EMPTY;
+        var values = new ArrayList<Integer>();
 
         for (var i = 0; i < 1000000; i++) {
             int value = random.nextInt();
@@ -148,20 +145,19 @@ public class PersistentRedBlackTreeTest {
                 assertTrue(next.contains(value));
                 assertFalse(previous.contains(value));
                 previous = next;
+                values.add(value);
             }
         }
-        for (var i = 0; i < 1000000; i++) {
-            int value = random.nextInt();
+
+        Collections.shuffle(values);
+
+        for (var value: values) {
             var next = previous.delete(value);
-            if (previous.contains(value)) {
-                assertNotNull(next);
-                assertNotEquals(previous, next);
-                assertFalse(next.contains(value));
-                assertTrue(previous.contains(value));
-                previous = next;
-            } else {
-                assertNull(next);
-            }
+            assertNotNull(next);
+            assertNotEquals(previous, next);
+            assertFalse(next.contains(value));
+            assertTrue(previous.contains(value));
+            previous = next;
         }
     }
 
