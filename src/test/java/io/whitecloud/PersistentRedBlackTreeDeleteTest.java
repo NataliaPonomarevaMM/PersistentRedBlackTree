@@ -22,6 +22,7 @@ public class PersistentRedBlackTreeDeleteTest {
         PersistentRedBlackTree<Integer> deleted = tree.delete(1).delete(2).delete(3).delete(4).delete(5).delete(6).delete(7);
         assertNotNull(deleted);
         assertNotEquals(deleted, tree);
+        assertTrue(deleted.checkIsRedBlackTree());
         for (int i = 1; i < 8; i++) {
             assertFalse(deleted.contains(i));
         }
@@ -37,6 +38,7 @@ public class PersistentRedBlackTreeDeleteTest {
         PersistentRedBlackTree<Integer> deleted = tree.delete(7).delete(6).delete(5).delete(4).delete(3).delete(2).delete(1);
         assertNotNull(deleted);
         assertNotEquals(deleted, tree);
+        assertTrue(deleted.checkIsRedBlackTree());
         for (int i = 1; i < 8; i++) {
             assertFalse(deleted.contains(i));
         }
@@ -55,6 +57,7 @@ public class PersistentRedBlackTreeDeleteTest {
 
         PersistentRedBlackTree<Integer> deleted = tree.delete(10);
         assertNotEquals(tree, deleted);
+        assertTrue(deleted.checkIsRedBlackTree());
 
         checkOrdersOfTree(tree, Map.of(PersistentTree.Order.PreOrder, List.of(10, 5, 4, 6, 15, 12, 11, 13, 17)));
         checkOrdersOfTree(deleted, Map.of(
@@ -76,6 +79,7 @@ public class PersistentRedBlackTreeDeleteTest {
 
         PersistentRedBlackTree<Integer> deleted = tree.delete(3);
         assertNotEquals(tree, deleted);
+        assertTrue(deleted.checkIsRedBlackTree());
 
         checkOrdersOfTree(tree, Map.of(PersistentTree.Order.PreOrder, List.of(5, 3, 10, 7, 6, 11)));
         checkOrdersOfTree(deleted, Map.of(
@@ -97,6 +101,7 @@ public class PersistentRedBlackTreeDeleteTest {
 
         PersistentRedBlackTree<Integer> deleted = tree.delete(20);
         assertNotEquals(tree, deleted);
+        assertTrue(deleted.checkIsRedBlackTree());
 
         checkOrdersOfTree(tree, Map.of(PersistentTree.Order.PreOrder, List.of(15, 10, 7, 6, 11, 20)));
         checkOrdersOfTree(deleted, Map.of(
@@ -119,6 +124,7 @@ public class PersistentRedBlackTreeDeleteTest {
 
         PersistentRedBlackTree<Integer> deleted = tree.delete(5);
         assertNotEquals(tree, deleted);
+        assertTrue(deleted.checkIsRedBlackTree());
 
         checkOrdersOfTree(tree, Map.of(PersistentTree.Order.PreOrder, List.of(12, 5, 3, 4, 10, 7, 6, 8, 11, 15, 13, 14, 17)));
         checkOrdersOfTree(deleted, Map.of(
@@ -141,6 +147,7 @@ public class PersistentRedBlackTreeDeleteTest {
 
         PersistentRedBlackTree<Integer> deleted = tree.delete(15);
         assertNotEquals(tree, deleted);
+        assertTrue(deleted.checkIsRedBlackTree());
 
         checkOrdersOfTree(tree, Map.of(PersistentTree.Order.PreOrder, List.of(12, 5, 3, 10, 9, 15, 13, 14, 20, 17, 16, 18, 21)));
         checkOrdersOfTree(deleted, Map.of(
@@ -163,6 +170,7 @@ public class PersistentRedBlackTreeDeleteTest {
 
         PersistentRedBlackTree<Integer> deleted = tree.delete(3);
         assertNotEquals(tree, deleted);
+        assertTrue(deleted.checkIsRedBlackTree());
 
         checkOrdersOfTree(tree, Map.of(PersistentTree.Order.PreOrder, List.of(12, 5, 3, 10, 9, 19, 17, 15, 13, 18, 20, 21)));
         checkOrdersOfTree(deleted, Map.of(
@@ -180,6 +188,7 @@ public class PersistentRedBlackTreeDeleteTest {
 
         PersistentRedBlackTree<Integer> deleted = tree.delete(2);
         assertNotEquals(tree, deleted);
+        assertTrue(deleted.checkIsRedBlackTree());
 
         checkOrdersOfTree(tree, Map.of(PersistentTree.Order.PreOrder, List.of(5, 2, 7, 6)));
         checkOrdersOfTree(deleted, Map.of(
@@ -198,6 +207,7 @@ public class PersistentRedBlackTreeDeleteTest {
 
         PersistentRedBlackTree<Integer> deleted = tree.delete(6);
         assertNotEquals(tree, deleted);
+        assertTrue(deleted.checkIsRedBlackTree());
 
         checkOrdersOfTree(tree, Map.of(PersistentTree.Order.PreOrder, List.of(5, 3, 2, 6)));
         checkOrdersOfTree(deleted, Map.of(
@@ -220,6 +230,7 @@ public class PersistentRedBlackTreeDeleteTest {
 
         PersistentRedBlackTree<Integer> deleted = tree.delete(17);
         assertNotEquals(tree, deleted);
+        assertTrue(deleted.checkIsRedBlackTree());
 
         checkOrdersOfTree(tree, Map.of(PersistentTree.Order.PreOrder, List.of(12, 5, 3, 2, 10, 8, 7, 11, 19, 17, 20, 21)));
         checkOrdersOfTree(deleted, Map.of(
@@ -240,6 +251,7 @@ public class PersistentRedBlackTreeDeleteTest {
 
         PersistentRedBlackTree<Integer> deleted = tree.delete(3);
         assertNotEquals(tree, deleted);
+        assertTrue(deleted.checkIsRedBlackTree());
 
         checkOrdersOfTree(tree, Map.of(PersistentTree.Order.PreOrder, List.of(5, 3, 10, 7, 11)));
         checkOrdersOfTree(deleted, Map.of(
@@ -260,6 +272,7 @@ public class PersistentRedBlackTreeDeleteTest {
 
         PersistentRedBlackTree<Integer> deleted = tree.delete(10);
         assertNotEquals(tree, deleted);
+        assertTrue(deleted.checkIsRedBlackTree());
 
         checkOrdersOfTree(tree, Map.of(PersistentTree.Order.PreOrder, List.of(5, 3, 1, 4, 10)));
         checkOrdersOfTree(deleted, Map.of(
