@@ -25,8 +25,8 @@ public class PersistentRedBlackTreeAddTest {
 
         checkOrdersOfTree(tree, Map.of(
             PersistentTree.Order.InOrder, List.of(1, 2, 3, 4, 5, 6, 7),
-            PersistentTree.Order.PreOrder, List.of(4, 2, 1, 3, 6, 5, 7),
-            PersistentTree.Order.PostOrder, List.of(1, 3, 2, 5, 7, 6, 4)
+            PersistentTree.Order.PreOrder, List.of(2, 1, 4, 3, 6, 5, 7),
+            PersistentTree.Order.PostOrder, List.of(1, 3, 5, 7, 6, 4, 2)
         ));
     }
 
@@ -42,8 +42,8 @@ public class PersistentRedBlackTreeAddTest {
 
         checkOrdersOfTree(tree, Map.of(
             PersistentTree.Order.InOrder, List.of(1, 2, 3, 4, 5, 6, 7),
-            PersistentTree.Order.PreOrder, List.of(4, 2, 1, 3, 6, 5, 7),
-            PersistentTree.Order.PostOrder, List.of(1, 3, 2, 5, 7, 6, 4)
+            PersistentTree.Order.PreOrder, List.of(6, 4, 2, 1, 3, 5, 7),
+            PersistentTree.Order.PostOrder, List.of(1, 3, 2, 5, 4, 7, 6)
         ));
     }
 

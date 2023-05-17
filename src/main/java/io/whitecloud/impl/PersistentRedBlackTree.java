@@ -7,6 +7,7 @@ import java.util.Stack;
 
 import static io.whitecloud.impl.TreeUtils.*;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.whitecloud.PersistentTree;
 
 public class PersistentRedBlackTree<E extends Comparable<E>> implements PersistentTree<E, PersistentRedBlackTree<E>> {
@@ -67,6 +68,19 @@ public class PersistentRedBlackTree<E extends Comparable<E>> implements Persiste
     @Override
     public Iterator<E> iterator(Order order) {
         return new OrderIterator(order);
+    }
+
+    @Override
+    public String toString() {
+        return buildString(root, new StringBuilder()).toString();
+    }
+
+    @VisibleForTesting
+    public boolean checkIsRedBlackTree() {
+        if (!isBlack(root)) {
+            return false;
+        }
+        return TreeUtils.checkIsRedBlackTree(root, 0) != -1;
     }
 
     private class OrderIterator implements Iterator<E> {

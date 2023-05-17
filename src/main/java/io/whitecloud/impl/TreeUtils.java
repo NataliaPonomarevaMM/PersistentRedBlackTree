@@ -31,15 +31,7 @@ class TreeUtils {
         else if (!isBlack(parents.getLast())) {
             return insertUncleRed(parents, node, nodeDirection);
         }
-        while (!parents.isEmpty()) {
-            Node<E> parent = parents.removeLast();
-            Node<E> newParent = Node.builderFrom(parent)
-                .child(node, nodeDirection)
-                .build();
-            nodeDirection = getNodeDirection(parents, parent);
-            node = newParent;
-        }
-        return node;
+        return updateParentsUpToRootAdd(parents, node, nodeDirection);
     }
 
     private static <E> Node<E> insertUncleRed(LinkedList<Node<E>> parents, Node<E> node, Node.Direction nodeDirection) {
@@ -100,7 +92,7 @@ class TreeUtils {
 
         Node<E> rotated = rotate(newGrandParent, parentDirection.getOpposite());
         Node.Direction direction = getNodeDirection(parents, grandParent);
-        return insert(parents, rotated, direction);
+        return updateParentsUpToRootAdd(parents, rotated, direction);
     }
 
     public static <E> Node<E> remove(LinkedList<Node.NodeWithDirection<E>> parents, Node<E> node) {
@@ -145,7 +137,7 @@ class TreeUtils {
                 return removeRedSibling(parents, newChild, nodeDirection);
             }
         }
-        return updateParentsUpToRoot(parents, newChild, nodeDirection);
+        return updateParentsUpToRootDelete(parents, newChild, nodeDirection);
     }
 
     private static <E> Node<E> removeRedSibling(LinkedList<Node.NodeWithDirection<E>> parents, Node<E> node, Node.Direction nodeDirection) {
@@ -218,9 +210,9 @@ class TreeUtils {
             if (parents.isEmpty()) {
                 return rotated;
             }
-            return updateParentsUpToRoot(parents, rotated, parentWithDir.direction());
+            return updateParentsUpToRootDelete(parents, rotated, parentWithDir.direction());
         }
-        return updateParentsUpToRoot(parents, newParentBuilder.build(), parentWithDir.direction());
+        return updateParentsUpToRootDelete(parents, newParentBuilder.build(), parentWithDir.direction());
     }
 
     private static <E> Node<E> removeBlackSiblingWithBlackChildren(LinkedList<Node.NodeWithDirection<E>> parents, Node<E> node, Node.Direction nodeDirection) {
@@ -244,7 +236,7 @@ class TreeUtils {
         Node<E> newParent = newParentBuilder
             .isBlack(true)
             .build();
-        return updateParentsUpToRoot(parents, newParent, parentWithDir.direction());
+        return updateParentsUpToRootDelete(parents, newParent, parentWithDir.direction());
     }
 
     private static <E> Node<E> rotate(Node<E> node, Node.Direction direction) {
@@ -257,7 +249,7 @@ class TreeUtils {
             .build();
     }
 
-    private static <E> boolean isBlack(Node<E> node) {
+    public static <E> boolean isBlack(Node<E> node) {
         return node == null || node.isBlack();
     }
 
@@ -270,6 +262,18 @@ class TreeUtils {
         return parent.getDirectionOfChild(node);
     }
 
+    private static <E> Node<E> updateParentsUpToRootAdd(LinkedList<Node<E>> parents, Node<E> node, Node.Direction nodeDirection) {
+        while (!parents.isEmpty()) {
+            Node<E> parent = parents.removeLast();
+            Node<E> newParent = Node.builderFrom(parent)
+                .child(node, nodeDirection)
+                .build();
+            nodeDirection = getNodeDirection(parents, parent);
+            node = newParent;
+        }
+        return node;
+    }
+
     public static <E> Node.NodeWithDirection<E> createNodeWithDirection(LinkedList<Node.NodeWithDirection<E>> parents, Node<E> node) {
         Node.Direction direction = null;
         if (!parents.isEmpty()) {
@@ -279,7 +283,7 @@ class TreeUtils {
         return new Node.NodeWithDirection<>(node, direction);
     }
 
-    private static <E> Node<E> updateParentsUpToRoot(LinkedList<Node.NodeWithDirection<E>> parents, Node<E> node, Node.Direction nodeDirection) {
+    private static <E> Node<E> updateParentsUpToRootDelete(LinkedList<Node.NodeWithDirection<E>> parents, Node<E> node, Node.Direction nodeDirection) {
         while (!parents.isEmpty()) {
             Node.NodeWithDirection<E> parentWithDir = parents.removeLast();
             node = Node.builderFrom(parentWithDir.node())
@@ -288,5 +292,46 @@ class TreeUtils {
             nodeDirection = parentWithDir.direction();
         }
         return node;
+    }
+
+    public static <E> int checkIsRedBlackTree(Node<E> node, int numOfBlackNodes) {
+        if (node == null) {
+            return numOfBlackNodes;
+        }
+
+        if (!node.isBlack()) {
+            if (!isBlack(node.left()) || !isBlack(node.right())) {
+                return -1;
+            }
+        }
+
+        int currentNumOfBlackNodes = numOfBlackNodes + (node.isBlack() ? 1 : 0);
+        int left = checkIsRedBlackTree(node.left(), currentNumOfBlackNodes);
+        int right = checkIsRedBlackTree(node.right(), currentNumOfBlackNodes);
+
+        return  left != right ? -1 : left;
+    }
+
+    public static <E> StringBuilder buildString(Node<E> node, StringBuilder builder) {
+        if (node == null)
+            return builder;
+        builder
+            .append(node.isBlack() ? 'b' : 'r')
+            .append('_')
+            .append(node.value().toString());
+
+        if (node.left() == null && node.right() == null)
+            return builder;
+
+        builder.append('(');
+        builder = buildString(node.left(), builder);
+        builder.append(')');
+
+        if (node.right() != null) {
+            builder.append('(');
+            builder = buildString(node.right(), builder);
+            builder.append(')');
+        }
+        return builder;
     }
 }

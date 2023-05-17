@@ -84,6 +84,7 @@ public class PersistentRedBlackTreeTest {
         for (int i = 1; i < 10000; i++) {
             var next = previous.add(i);
             assertNotNull(next);
+            assertTrue(next.checkIsRedBlackTree());
             assertNotEquals(previous, next);
             assertTrue(next.contains(i));
             assertFalse(previous.contains(i));
@@ -95,6 +96,7 @@ public class PersistentRedBlackTreeTest {
         for (int i = 1; i < 10000; i++) {
             var next = previous.delete(i);
             assertNotNull(next);
+            assertTrue(next.checkIsRedBlackTree());
             assertNotEquals(previous, next);
             assertFalse(next.contains(i));
             assertTrue(previous.contains(i));
@@ -134,13 +136,14 @@ public class PersistentRedBlackTreeTest {
         var previous = EMPTY;
         var values = new ArrayList<Integer>();
 
-        for (var i = 0; i < 1000000; i++) {
+        for (var i = 0; i < 10000; i++) {
             int value = random.nextInt();
             var next = previous.add(value);
             if (previous.contains(value)) {
                 assertNull(next);
             } else {
                 assertNotNull(next);
+                assertTrue(next.checkIsRedBlackTree());
                 assertNotEquals(previous, next);
                 assertTrue(next.contains(value));
                 assertFalse(previous.contains(value));
@@ -154,6 +157,7 @@ public class PersistentRedBlackTreeTest {
         for (var value: values) {
             var next = previous.delete(value);
             assertNotNull(next);
+            assertTrue(next.checkIsRedBlackTree());
             assertNotEquals(previous, next);
             assertFalse(next.contains(value));
             assertTrue(previous.contains(value));
@@ -181,7 +185,7 @@ public class PersistentRedBlackTreeTest {
         Iterator<Integer> iterator = tree.iterator(PersistentTree.Order.PreOrder);
         iterator.forEachRemaining(list::add);
 
-        List<Integer> preOrder = List.of(4, 2, 1, 3, 6, 5, 7);
+        List<Integer> preOrder = List.of(2, 1, 4, 3, 6, 5, 7);
         assertEquals(preOrder, list);
     }
 
@@ -193,7 +197,7 @@ public class PersistentRedBlackTreeTest {
         Iterator<Integer> iterator = tree.iterator(PersistentTree.Order.PostOrder);
         iterator.forEachRemaining(list::add);
 
-        List<Integer> postOrder = List.of(1, 3, 2, 5, 7, 6, 4);
+        List<Integer> postOrder = List.of(1, 3, 5, 7, 6, 4, 2);
         assertEquals(postOrder, list);
     }
 }
